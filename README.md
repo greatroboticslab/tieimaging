@@ -1,4 +1,4 @@
-# TIE Phase Retrieval Project
+# TIE Phase Reconstruction Project
 
 ## Overview
 This project uses the Transport of Intensity Equation (TIE) to recover phase information from intensity images using MATLAB.
