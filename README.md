@@ -70,7 +70,7 @@ I_minus = imread('zminus copy.JPG');
 
 ##  Results
 
-(Add your result image here)
+![TIE Result](result.png)
 
 ---
 
