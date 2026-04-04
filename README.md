@@ -1,20 +1,5 @@
 # TIE Phase Retrieval (MATLAB)
 
-## Table of Contents
-- [Overview](#overview)
-- [Methods](#methods)
-  - [Data Collection](#data-collection)
-  - [Equipment](#equipment)
-  - [Procedure](#procedure)
-- [MATLAB Reconstruction](#matlab-reconstruction)
-  - [Files](#files)
-  - [How It Works](#how-it-works)
-- [How to Run](#how-to-run)
-- [Results Output](#-results-output)
-- [Notes](#-notes)
-- [Future Work](#-future-work)
-- [Acknowledgements](#-acknowledgements)
-
 ---
 
 ## Overview
