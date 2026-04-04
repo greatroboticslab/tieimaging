@@ -20,7 +20,7 @@
 ## Overview
 
 This project implements the Transport of Intensity Equation (TIE) to reconstruct phase information from intensity-only measurements.
-The experiment characterizes a low-cost LCD-based spatial light modulator (SLM). By analyzing intensity changes across slightly defocused images, the algorithm reconstructs a 3D phase map of the LCD surface.
+The experiment characterizes a low-cost LCD-based spatial light modulator (SLM). By analyzing intensity changes across slightly defocused images, the algorithm reconstructs a 3D phase map of the LCD surface. I have imcluded my senior thesis and results. 
 
 ### The phase reconstruction reveals:
 - Surface texture and non-uniformities of the LCD
