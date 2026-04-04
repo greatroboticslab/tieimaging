@@ -98,7 +98,7 @@ I_minus = imread('zminus.JPG');
 
 ---
 
-## 📊 Results Output
+## Results Output
 
 ### Includes:
 - Phase map of the LCD
@@ -112,10 +112,10 @@ I_minus = imread('zminus.JPG');
 
 ---
 
-## 📁 Repository Contents
+## Repository Contents
 ---
 
-## 📝 Notes
+##  Notes
 
 - Ensure images are well-aligned
 - Use consistent illumination
@@ -125,7 +125,7 @@ I_minus = imread('zminus.JPG');
 
 ---
 
-## 🚀 Future Work
+##  Future Work
 
 - Test additional LCD patterns and voltages
 - Improve noise filtering and stability
@@ -134,7 +134,7 @@ I_minus = imread('zminus.JPG');
 
 ---
 
-## 🙏 Acknowledgements
+##  Acknowledgements
 
 - **Dr. Hongbo Zhang** — Mentorship and guidance
 - **Middle Tennessee State University (MTSU)**, Department of Physics and Astronomy
