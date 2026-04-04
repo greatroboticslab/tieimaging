@@ -11,7 +11,6 @@
   - [How It Works](#how-it-works)
 - [How to Run](#how-to-run)
 - [Results Output](#-results-output)
-- [Repository Contents](#-repository-contents)
 - [Notes](#-notes)
 - [Future Work](#-future-work)
 - [Acknowledgements](#-acknowledgements)
