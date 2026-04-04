@@ -48,7 +48,7 @@ To perform TIE reconstruction, capture three intensity images using an optical s
 1. Align the system:
    **Light → LCD → Lens → Camera**
 
-2. *(Optional)* Display a pattern on the LCD using Arduino
+2.  Display a pattern on the LCD using Arduino
 
 3. Capture the following images:
 
