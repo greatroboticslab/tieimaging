@@ -112,9 +112,6 @@ I_minus = imread('zminus.JPG');
 
 ---
 
-## Repository Contents
----
-
 ##  Notes
 
 - Ensure images are well-aligned
