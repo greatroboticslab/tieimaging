@@ -1,0 +1,313 @@
+#include <SPI.h>
+#include <TFT_eSPI.h>
+
+TFT_eSPI tft = TFT_eSPI();
+
+// === GLOBAL TEST PARAMETERS ===
+const int globalRadius = 20;
+const int globalSpacing = 10;
+const int globalOffset = 15;
+
+// === COLORS ===
+const uint16_t BACKGROUND_COLOR = TFT_WHITE;
+const uint16_t SHAPE_COLOR = TFT_BLACK;
+
+
+// === SHAPE DRAWING FUNCTIONS ===
+
+void drawPolygon(int xCenter, int yCenter, int radius, int numSides, uint16_t color) {
+  const float pi = 3.14159265358979323846;
+  float angle = pi / 2;
+  int pointsX[numSides];
+  int pointsY[numSides];
+  for (int i = 0; i < numSides; i++) {
+    pointsX[i] = xCenter + round(cos(angle) * radius);
+    pointsY[i] = yCenter - round(sin(angle) * radius);
+    angle += (2 * pi) / numSides;
+  }
+  for (int i = 0; i < numSides; i++) {
+    tft.drawLine(pointsX[i], pointsY[i], pointsX[(i + 1) % numSides], pointsY[(i + 1) % numSides], color);
+  }
+}
+
+void fillPolygon(int xCenter, int yCenter, int radius, int numSides, uint16_t color) {
+  const float pi = 3.14159265358979323846;
+  float angle = pi / 2;
+  int prevX = xCenter + round(cos(angle) * radius);
+  int prevY = yCenter - round(sin(angle) * radius);
+  for (int i = 0; i < numSides; i++) {
+    angle += (2 * pi) / numSides;
+    int currentX = xCenter + round(cos(angle) * radius);
+    int currentY = yCenter - round(sin(angle) * radius);
+    tft.fillTriangle(xCenter, yCenter, prevX, prevY, currentX, currentY, color);
+    prevX = currentX;
+    prevY = currentY;
+  }
+}
+
+void drawSpiral(int xCenter, int yCenter, float startRadius, float growthFactor, float angleIncrement, int numTurns, uint16_t color) {
+  float angle = 0;
+  float currentRadius = startRadius;
+  int prevX = xCenter + round(cos(angle) * currentRadius);
+  int prevY = yCenter - round(sin(angle) * currentRadius);
+  for (int i = 0; i < numTurns * 360; i++) {
+    angle += angleIncrement * (PI / 180.0);
+    currentRadius = startRadius + (growthFactor * (angle / (2 * PI)));
+    int currentX = xCenter + round(cos(angle) * currentRadius);
+    int currentY = yCenter - round(sin(angle) * currentRadius);
+    if (currentX < 0 || currentX >= tft.width() || currentY < 0 || currentY >= tft.height() ||
+        prevX < 0 || prevX >= tft.width() || prevY < 0 || prevY >= tft.height()) {
+      prevX = currentX;
+      prevY = currentY;
+      continue;
+    }
+    tft.drawLine(prevX, prevY, currentX, currentY, color);
+    prevX = currentX;
+    prevY = currentY;
+  }
+}
+
+void drawConcentricCircles(int xCenter, int yCenter, int maxRadius, int spacing, uint16_t color) {
+  for (int r = maxRadius; r > 0; r -= spacing)
+    tft.drawCircle(xCenter, yCenter, r, color);
+}
+
+void drawConcentricSquares(int xCenter, int yCenter, int maxSide, int spacing, uint16_t color) {
+  for (int s = maxSide; s > 0; s -= spacing) {
+    int halfSide = s / 2;
+    tft.drawRect(xCenter - halfSide, yCenter - halfSide, s, s, color);
+  }
+}
+
+void drawChequerboard(int startX, int startY, int squareSize, int numCols, int numRows, uint16_t color1, uint16_t color2) {
+  for (int r = 0; r < numRows; r++)
+    for (int c = 0; c < numCols; c++) {
+      uint16_t currentColor = ((r + c) % 2 == 0) ? color1 : color2;
+      tft.fillRect(startX + c * squareSize, startY + r * squareSize, squareSize, squareSize, currentColor);
+    }
+}
+
+void drawCustomShape(const int* points, int numPoints, uint16_t color) {
+  for (int i = 0; i < numPoints - 1; i++)
+    tft.drawLine(points[i*2], points[i*2+1], points[(i+1)*2], points[(i+1)*2+1], color);
+  tft.drawLine(points[(numPoints-1)*2], points[(numPoints-1)*2+1], points[0], points[1], color);
+}
+
+void drawRectangleGrid(int startX, int startY, int rectWidth, int rectHeight, int numCols, int numRows, int xSpacing, int ySpacing, uint16_t color) {
+  for (int r = 0; r < numRows; r++)
+    for (int c = 0; c < numCols; c++)
+      tft.fillRect(startX + c * (rectWidth + xSpacing), startY + r * (rectHeight + ySpacing), rectWidth, rectHeight, color);
+}
+
+void drawThickLine(int x0, int y0, int x1, int y1, int thickness, uint16_t color) {
+  for (int t = -(thickness / 2); t <= (thickness / 2); t++) {
+    float dx = x1 - x0;
+    float dy = y1 - y0;
+    float len = sqrt(dx * dx + dy * dy);
+    if (len == 0) continue;
+    int ox = round((-dy / len) * t);
+    int oy = round((dx / len) * t);
+    tft.drawLine(x0 + ox, y0 + oy, x1 + ox, y1 + oy, color);
+  }
+}
+
+void drawLinearGrating(int startX, int startY, int width, int height,
+                        int spacing, bool horizontal, int thickness, uint16_t color) {
+  if (horizontal) {
+    for (int y = startY; y <= startY + height; y += spacing)
+      drawThickLine(startX, y, startX + width, y, thickness, color);
+  } else {
+    for (int x = startX; x <= startX + width; x += spacing)
+      drawThickLine(x, startY, x, startY + height, thickness, color);
+  }
+}
+
+void drawDiffractionPattern(int xCenter, int yCenter, int numRings,
+                             float ringSpacingStart, float ringSpacingGrowth,
+                             int thickness, uint16_t color) {
+  tft.fillCircle(xCenter, yCenter, 3 + thickness, color);
+  float radius = ringSpacingStart;
+  for (int i = 0; i < numRings; i++) {
+    if (xCenter - radius < 0 || xCenter + radius >= tft.width() ||
+        yCenter - radius < 0 || yCenter + radius >= tft.height()) break;
+    for (int t = 0; t < thickness; t++) {
+      tft.drawCircle(xCenter, yCenter, (int)radius + t, color);
+    }
+    radius += ringSpacingStart + ringSpacingGrowth * i;
+  }
+}
+
+// === FORK / VORTEX GRATING ===
+// Renders a binary fork grating — a vertical carrier grating with a
+// topological phase singularity of charge 'l' at the centre.
+// The pattern is:  phi(x,y) = l * atan2(y,x) + kx * x
+// A pixel is black when sin(phi) >= 0, white otherwise (binary grating).
+//
+// Parameters:
+//   xCenter, yCenter : centre of the singularity on the display
+//   gratingPeriod    : spatial period of the vertical carrier (pixels)
+//   charge           : topological charge l (1 = single fork tine, 2 = double, …)
+void drawForkGrating(int xCenter, int yCenter, int gratingPeriod, int charge) {
+  for (int y = 0; y < tft.height(); y++) {
+    for (int x = 0; x < tft.width(); x++) {
+      float dx = x - xCenter;
+      float dy = y - yCenter;
+      // Phase = vortex term + linear grating carrier
+      float phase = charge * atan2(dy, dx) + (2.0f * PI / gratingPeriod) * dx;
+      // Binary threshold: map to black or white
+      uint16_t col = (sin(phase) >= 0) ? TFT_BLACK : TFT_WHITE;
+      tft.drawPixel(x, y, col);
+    }
+  }
+}
+
+
+// === TEST ROUTINES ===
+
+void showPolygonResolutionTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Polygon Resolution Test:");
+  int yPos = 30;
+  int xPos = globalRadius + globalSpacing;
+  for (int sides = 3; sides <= 8; sides++) {
+    drawPolygon(xPos, yPos, globalRadius, sides, SHAPE_COLOR);
+    xPos += (2 * globalRadius + globalSpacing);
+    if (xPos > tft.width() - (globalRadius + globalSpacing)) { xPos = globalRadius + globalSpacing; yPos += (2 * globalRadius + globalSpacing); }
+    if (yPos > tft.height() - globalOffset) break;
+  }
+  xPos = globalRadius + globalSpacing;
+  yPos += (2 * globalRadius + globalSpacing);
+  for (int sides = 3; sides <= 8; sides++) {
+    fillPolygon(xPos, yPos, globalRadius, sides, SHAPE_COLOR);
+    xPos += (2 * globalRadius + globalSpacing);
+    if (xPos > tft.width() - (globalRadius + globalSpacing)) { xPos = globalRadius + globalSpacing; yPos += (2 * globalRadius + globalSpacing); }
+    if (yPos > tft.height() - globalOffset) break;
+  }
+  delay(3000);
+}
+
+void showPatternResolutionTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Pattern Resolution Test:");
+  int yPos = 30;
+  tft.drawString("Concentric Circles", 0, yPos, 1);
+  drawConcentricCircles(tft.width() / 4, yPos + globalOffset * 2, globalRadius * 2, 5, SHAPE_COLOR);
+  tft.drawString("Concentric Squares", tft.width() / 2, yPos, 1);
+  drawConcentricSquares(tft.width() * 3 / 4, yPos + globalOffset * 2, globalRadius * 4, 10, SHAPE_COLOR);
+  yPos += globalOffset * 4 + globalRadius * 2;
+  tft.drawString("Chequerboards", 0, yPos, 1);
+  drawChequerboard(0, yPos + globalOffset, 10, tft.width() / 10, (tft.height() - (yPos + globalOffset)) / 10 / 2, SHAPE_COLOR, BACKGROUND_COLOR);
+  drawChequerboard(0, yPos + globalOffset + (tft.height() - (yPos + globalOffset)) / 10 / 2 * 10, 5, tft.width() / 5, (tft.height() - (yPos + globalOffset + (tft.height() - (yPos + globalOffset)) / 10 / 2 * 10)) / 5, SHAPE_COLOR, BACKGROUND_COLOR);
+  delay(5000);
+}
+
+void showSpiralAndGridTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Spiral & Grid Test:");
+  int yPos = 30;
+  tft.drawString("Spirals", 0, yPos, 1);
+  drawSpiral(tft.width() / 4, yPos + globalOffset * 3, 1, 0.2, 0.5f, 5, SHAPE_COLOR);
+  drawSpiral(tft.width() * 3 / 4, yPos + globalOffset * 3, 5, 0.1, 0.2f, 8, SHAPE_COLOR);
+  yPos += globalOffset * 6 + globalRadius * 3;
+  tft.drawString("Rectangle Grids", 0, yPos, 1);
+  drawRectangleGrid(0, yPos + globalOffset, 5, 5, tft.width() / 5, (tft.height() - (yPos + globalOffset)) / 5 / 2, 2, 2, SHAPE_COLOR);
+  drawRectangleGrid(0, yPos + globalOffset + (tft.height() - (yPos + globalOffset)) / 5 / 2 * 7, 10, 10, tft.width() / 10, (tft.height() - (yPos + globalOffset + (tft.height() - (yPos + globalOffset)) / 5 / 2 * 7)) / 10, 5, 5, SHAPE_COLOR);
+  delay(5000);
+}
+
+void showCustomShapeTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Custom Shape Test:");
+  const int arrowPoints[] = { 50,100, 30,120, 45,120, 45,150, 55,150, 55,120, 70,120 };
+  tft.drawString("Arrow (outline)", 0, 30, 1);
+  drawCustomShape(arrowPoints, sizeof(arrowPoints) / sizeof(arrowPoints[0]) / 2, SHAPE_COLOR);
+  const int housePoints[] = { 150,150, 200,150, 200,100, 175,70, 150,100 };
+  tft.drawString("House (outline)", 120, 30, 1);
+  drawCustomShape(housePoints, sizeof(housePoints) / sizeof(housePoints[0]) / 2, SHAPE_COLOR);
+  const int zigZagPoints[] = { 20,200, 40,220, 60,200, 80,220, 100,200, 120,220, 140,200, 160,220, 180,200, 200,220 };
+  tft.drawString("Zig-Zag Line", 0, 180, 1);
+  for (int i = 0; i < (sizeof(zigZagPoints) / sizeof(zigZagPoints[0]) / 2) - 1; i++)
+    tft.drawLine(zigZagPoints[i*2], zigZagPoints[i*2+1], zigZagPoints[(i+1)*2], zigZagPoints[(i+1)*2+1], SHAPE_COLOR);
+  delay(5000);
+}
+
+void showGratingTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Grating Test:");
+  int yPos = 18;
+  tft.drawString("H. grating", 0, yPos, 1);
+  drawLinearGrating(0, yPos + globalOffset, tft.width() / 2 - 5,
+                    tft.height() - yPos - globalOffset - 10,
+                    10, true, 3, SHAPE_COLOR);
+  tft.drawString("V. grating", tft.width() / 2 + 2, yPos, 1);
+  drawLinearGrating(tft.width() / 2 + 2, yPos + globalOffset,
+                    tft.width() / 2 - 4,
+                    tft.height() - yPos - globalOffset - 10,
+                    10, false, 3, SHAPE_COLOR);
+  tft.drawLine(tft.width() / 2, yPos, tft.width() / 2, tft.height(), SHAPE_COLOR);
+  delay(5000);
+}
+
+void showDiffractionTest() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.println("Diffraction Pattern Test:");
+  int yPos = 18;
+  tft.drawString("Diffraction patterns:", 0, yPos, 1);
+  drawDiffractionPattern(tft.width() / 4, tft.height() / 2,
+                          6, 10, 3, 3, SHAPE_COLOR);
+  drawDiffractionPattern(tft.width() * 3 / 4, tft.height() / 2,
+                          5, 14, 5, 3, SHAPE_COLOR);
+  delay(5000);
+}
+
+// === BLANK SCREEN (no pattern) ===
+void showBlankScreen() {
+  tft.fillScreen(BACKGROUND_COLOR);
+  delay(5000);
+}
+
+// === FORK / VORTEX GRATING SLIDE ===
+// Fills the full screen with a binary fork grating (topological charge = 1).
+// Adjust 'gratingPeriod' to change fringe density and 'charge' for vortex order.
+void showForkGrating() {
+  drawForkGrating(tft.width() / 2, tft.height() / 2, 12, 1);
+  delay(5000);
+}
+
+
+// === SETUP AND LOOP ===
+
+void setup() {
+  Serial.begin(115200);
+  tft.init();
+  tft.setRotation(0);
+  tft.fillScreen(BACKGROUND_COLOR);
+  tft.setCursor(0, 0);
+  tft.setTextColor(SHAPE_COLOR);
+  tft.setTextSize(1);
+  Serial.println("TFT Display initialized.");
+}
+
+void loop() {
+  showBlankScreen();
+  showPolygonResolutionTest();
+  showPatternResolutionTest();
+  showSpiralAndGridTest();
+  showCustomShapeTest();
+  showGratingTest();
+  showDiffractionTest();
+  showForkGrating();         // Fork / vortex grating (optical vortex beam pattern)
+  delay(2000);
+}
