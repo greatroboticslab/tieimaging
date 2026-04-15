@@ -1,5 +1,5 @@
 This is the Raw data for the different conditions of the LCD SLM experiment.
-Folder 1. LCD_broken_slm_off:  This shows a broken lcd screen without plugging the lcd into the microcontroller. This material is scrps from peeling the lcd backlight and layers. 
+Folder 1. LCD_broken_slm_off:  This shows a broken lcd screen without plugging the lcd into the microcontroller. This material is scraps from peeling the lcd backlight and layers. 
 Folder 2. LCD_SLM_on: This shows the newly peeled lcd screen connected to the microcontroller displaying patterns.
 Folder 3. LCD_broken_SLM_on: This shows a broken lcd screen still connected to the microcontroller displaying patterns. 
 
